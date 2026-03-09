@@ -20,14 +20,25 @@ if not os.getenv("OPENAI_API_KEY"):
 # Initialize LLM
 llm = ChatOpenAI(model="gpt-4o-mini", temperature=0.9)
 
+import os
+
 # Load vectorstore
-try:
-    embeddings = OpenAIEmbeddings(model="text-embedding-3-small")
-    vectorstore = FAISS.load_local("faiss_index", embeddings, allow_dangerous_deserialization=True)
-    retriever = vectorstore.as_retriever()
-except Exception as e:
-    st.error(f"Failed to load vectorstore: {e}. Please ensure faiss_index exists.")
+embeddings = OpenAIEmbeddings(model="text-embedding-3-small")
+
+index_path = "faiss_index"
+
+if os.path.exists(index_path):
+    vectorstore = FAISS.load_local(
+        index_path,
+        embeddings,
+        allow_dangerous_deserialization=True
+    )
+    retriever = vectorstore.as_retriever(search_kwargs={"k": 3})
+else:
+    st.error("FAISS index not found. Please run the indexing script or upload the faiss_index folder.")
     st.stop()
+
+
 
 # Set up conversational memory
 if "history" not in st.session_state:
@@ -92,4 +103,3 @@ if st.button("Ask"):
 if st.button("Clear History"):
     st.session_state.history.clear()
     st.rerun()
-    
