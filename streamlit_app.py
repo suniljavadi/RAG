@@ -3,6 +3,8 @@ import os
 from dotenv import load_dotenv
 from langchain_openai import ChatOpenAI
 from langchain_community.vectorstores import FAISS
+from langchain_community.document_loaders import TextLoader
+from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_openai import OpenAIEmbeddings
 from langchain_core.runnables import RunnablePassthrough
 from langchain_core.prompts import PromptTemplate
@@ -46,8 +48,15 @@ if os.path.exists(index_path):
     )
     retriever = vectorstore.as_retriever(search_kwargs={"k": 3})
 else:
-    st.error("FAISS index not found. Please run the indexing script or upload the faiss_index folder.")
-    st.stop()
+    example_path = os.path.join(os.path.dirname(__file__), "example.txt")
+    if not os.path.exists(example_path):
+        st.error("FAISS index and example.txt are both missing.")
+        st.stop()
+    documents = TextLoader(example_path).load()
+    chunks = RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=100).split_documents(documents)
+    vectorstore = FAISS.from_documents(chunks, embeddings)
+    retriever = vectorstore.as_retriever(search_kwargs={"k": 3})
+    st.info("Using an in-memory index built from example.txt. Build faiss_index for a persisted index.")
 
 
 
