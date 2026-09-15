@@ -41,7 +41,14 @@ python -m venv .venv
 pip install -r requirements.txt
 ```
 
-Set `OPENAI_API_KEY` in a local `.env` file before running the OpenAI-backed scripts. Never commit credentials.
+For Streamlit, create `.streamlit/secrets.toml` locally:
+
+```toml
+OPENAI_API_KEY = "your-api-key"
+```
+
+The file is ignored by Git. Copy `.streamlit/secrets.toml.example` as a starting point, or set `OPENAI_API_KEY` in the environment for command-line scripts. On Streamlit Community Cloud, add the same key under the app's **Settings → Secrets**.
+Never commit credentials.
 
 ## Run
 

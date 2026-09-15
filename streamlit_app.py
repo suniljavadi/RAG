@@ -12,18 +12,23 @@ from collections import deque
 # Load environment variables
 load_dotenv()
 
-# Check for API key
-if not os.getenv("OPENAI_API_KEY"):
-    st.error("OPENAI_API_KEY not found in .env file. Please set it.")
+try:
+    api_key = st.secrets.get("OPENAI_API_KEY")
+except Exception:
+    api_key = None
+api_key = api_key or os.getenv("OPENAI_API_KEY")
+
+if not api_key:
+    st.error("Set OPENAI_API_KEY in .streamlit/secrets.toml or the environment.")
     st.stop()
 
 # Initialize LLM
-llm = ChatOpenAI(model="gpt-4o-mini", temperature=0.9)
+llm = ChatOpenAI(model="gpt-4o-mini", temperature=0.9, api_key=api_key)
 
 import os
 
 # Load vectorstore
-embeddings = OpenAIEmbeddings(model="text-embedding-3-small")
+embeddings = OpenAIEmbeddings(model="text-embedding-3-small", api_key=api_key)
 
 index_path = "faiss_index"
 
