@@ -59,9 +59,9 @@ python build_index.py
 
 The index-building script expects `data/docs.txt`; the interactive script expects `example.txt`.
 
-## Important Security Action
+## Security Status
 
-Before publishing or running this repository, rotate any key that may have appeared in source history and remove hard-coded credentials from `build_index.py`. The key must come only from environment configuration. This README does not reproduce the credential.
+The repository now reads `OPENAI_API_KEY` from environment configuration and includes `.env.example`; `.env` remains ignored. If an earlier committed key was ever valid, rotate it separately because removing it from the current tree does not erase Git history.
 
 ## Limitations
 
