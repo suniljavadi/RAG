@@ -9,14 +9,21 @@ from langchain_core.output_parsers import StrOutputParser
 
 # Load environment variables
 import os
+from pathlib import Path
 from dotenv import load_dotenv
 load_dotenv()
+
+if not os.getenv("OPENAI_API_KEY"):
+    raise RuntimeError("OPENAI_API_KEY is not configured")
 
 # Initialize LLM
 llm = ChatOpenAI(model="gpt-4o-mini", temperature=0.9)
 
 # Load and process documents
-documents = TextLoader("example.txt").load()
+document_path = Path(__file__).resolve().parent / "example.txt"
+if not document_path.exists():
+    raise FileNotFoundError(f"Document not found: {document_path}")
+documents = TextLoader(str(document_path)).load()
 text_splitter = RecursiveCharacterTextSplitter(chunk_size=100, chunk_overlap=20)
 texts = text_splitter.split_documents(documents)
 

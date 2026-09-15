@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 
 from dotenv import load_dotenv
 from langchain_community.document_loaders import TextLoader
@@ -13,7 +14,8 @@ if not api_key:
     print("OPENAI_API_KEY not found in .env file. Please set it.")
     raise SystemExit(1)
 
-doc_path = "data/docs.txt"
+project_root = Path(__file__).resolve().parent
+doc_path = project_root / "data" / "docs.txt"
 
 if not os.path.exists(doc_path):
     print(f"Document file not found: {doc_path}")
@@ -30,7 +32,7 @@ docs = text_splitter.split_documents(documents)
 
 print("Creating embeddings...")
 embeddings = OpenAIEmbeddings(model="text-embedding-3-small")
-index_path = "faiss_index"
+index_path = project_root / "faiss_index"
 
 if os.path.exists(index_path):
     print("FAISS index already exists. Skipping creation.")
