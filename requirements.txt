@@ -1,5 +1,7 @@
-langchain-openai
-langchain-community
-langchain-core
-python-dotenv
-faiss-cpu
+streamlit==1.55.0
+langchain-openai==1.6.2
+langchain-community==0.4.2
+langchain-core==1.6.3
+langchain-text-splitters==1.1.2
+python-dotenv==1.0.1
+faiss-cpu==1.15.0
