@@ -4,6 +4,12 @@
 
 A small command-line Retrieval-Augmented Generation example built with LangChain, OpenAI embeddings, FAISS, and a text document. It loads `example.txt`, splits it into overlapping chunks, retrieves relevant chunks, and asks an OpenAI chat model to answer from that context.
 
+## Live Demo
+
+[Open the deployed Streamlit app](https://rag-app-system-shxft5zzpqhv5jpxvmdhe3.streamlit.app/)
+
+The public app was verified loading the RAG UI and building its in-memory index from `example.txt`. OpenAI functionality requires the configured Streamlit Cloud secret.
+
 ## Architecture
 
 ```mermaid
