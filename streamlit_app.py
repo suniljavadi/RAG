@@ -1,5 +1,6 @@
 import streamlit as st
 import os
+from pathlib import Path
 from dotenv import load_dotenv
 from langchain_openai import ChatOpenAI
 from langchain_community.vectorstores import FAISS
@@ -33,26 +34,25 @@ if not api_key:
 # Initialize LLM
 llm = ChatOpenAI(model="gpt-4o-mini", temperature=0.9, api_key=api_key)
 
-import os
-
 # Load vectorstore
 embeddings = OpenAIEmbeddings(model="text-embedding-3-small", api_key=api_key)
 
-index_path = "faiss_index"
+project_root = Path(__file__).resolve().parent
+index_path = project_root / "faiss_index"
 
 if os.path.exists(index_path):
     vectorstore = FAISS.load_local(
-        index_path,
+        str(index_path),
         embeddings,
         allow_dangerous_deserialization=True
     )
     retriever = vectorstore.as_retriever(search_kwargs={"k": 3})
 else:
-    example_path = os.path.join(os.path.dirname(__file__), "example.txt")
-    if not os.path.exists(example_path):
+    example_path = project_root / "example.txt"
+    if not example_path.exists():
         st.error("FAISS index and example.txt are both missing.")
         st.stop()
-    documents = TextLoader(example_path).load()
+    documents = TextLoader(str(example_path)).load()
     chunks = RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=100).split_documents(documents)
     vectorstore = FAISS.from_documents(chunks, embeddings)
     retriever = vectorstore.as_retriever(search_kwargs={"k": 3})

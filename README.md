@@ -47,7 +47,7 @@ For Streamlit, create `.streamlit/secrets.toml` locally:
 OPENAI_API_KEY = "your-api-key"
 ```
 
-The file is ignored by Git. Copy `.streamlit/secrets.toml.example` as a starting point, or set `OPENAI_API_KEY` in the environment for command-line scripts. On Streamlit Community Cloud, add the same key under the app's **Settings → Secrets**.
+The file is ignored by Git. Copy `.streamlit/secrets.toml.example` as a starting point, or set `OPENAI_API_KEY` in the environment for command-line scripts. If neither is configured, the Streamlit app provides a password field for the current session and does not write the key to disk. On Streamlit Community Cloud, add the same key under the app's **Settings → Secrets**.
 Never commit credentials.
 
 ## Run
@@ -65,6 +65,8 @@ python build_index.py
 ```
 
 The index-building script expects `data/docs.txt`; the interactive script expects `example.txt`.
+
+The Streamlit app checks for a saved `faiss_index` next to `streamlit_app.py`. If it is absent, the app automatically builds an in-memory index from `example.txt`, so the demo can start without a separate indexing command. The first question still requires an OpenAI API key for embeddings and chat responses.
 
 ## Security Status
 
