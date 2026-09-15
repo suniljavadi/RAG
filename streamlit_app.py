@@ -19,8 +19,14 @@ except Exception:
 api_key = api_key or os.getenv("OPENAI_API_KEY")
 
 if not api_key:
-    st.error("Set OPENAI_API_KEY in .streamlit/secrets.toml or the environment.")
-    st.stop()
+    api_key = st.text_input(
+        "OpenAI API key",
+        type="password",
+        help="Used only for this Streamlit session and never written to disk.",
+    )
+    if not api_key:
+        st.info("Add a key in .streamlit/secrets.toml, set OPENAI_API_KEY, or paste one here to continue.")
+        st.stop()
 
 # Initialize LLM
 llm = ChatOpenAI(model="gpt-4o-mini", temperature=0.9, api_key=api_key)
