@@ -7,10 +7,10 @@ from langchain_community.vectorstores import FAISS
 from langchain_community.document_loaders import TextLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_openai import OpenAIEmbeddings
-from langchain_core.runnables import RunnablePassthrough
 from langchain_core.prompts import PromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 from collections import deque
+from operator import itemgetter
 
 # Load environment variables
 load_dotenv()
@@ -34,28 +34,36 @@ if not api_key:
 # Initialize LLM
 llm = ChatOpenAI(model="gpt-4o-mini", temperature=0.9, api_key=api_key)
 
-# Load vectorstore
-embeddings = OpenAIEmbeddings(model="text-embedding-3-small", api_key=api_key)
-
 project_root = Path(__file__).resolve().parent
-index_path = project_root / "faiss_index"
 
-if os.path.exists(index_path):
-    vectorstore = FAISS.load_local(
-        str(index_path),
-        embeddings,
-        allow_dangerous_deserialization=True
-    )
-    retriever = vectorstore.as_retriever(search_kwargs={"k": 3})
-else:
+
+@st.cache_resource(show_spinner="Loading the document index...")
+def load_vectorstore(configured_api_key: str) -> tuple[FAISS, bool]:
+    embeddings = OpenAIEmbeddings(model="text-embedding-3-small", api_key=configured_api_key)
+    index_path = project_root / "faiss_index"
+    if index_path.exists():
+        return FAISS.load_local(
+            str(index_path),
+            embeddings,
+            allow_dangerous_deserialization=True,
+        ), True
+
     example_path = project_root / "example.txt"
     if not example_path.exists():
-        st.error("FAISS index and example.txt are both missing.")
-        st.stop()
+        raise FileNotFoundError("FAISS index and example.txt are both missing.")
     documents = TextLoader(str(example_path)).load()
     chunks = RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=100).split_documents(documents)
-    vectorstore = FAISS.from_documents(chunks, embeddings)
-    retriever = vectorstore.as_retriever(search_kwargs={"k": 3})
+    return FAISS.from_documents(chunks, embeddings), False
+
+
+try:
+    vectorstore, has_persisted_index = load_vectorstore(api_key)
+except FileNotFoundError as error:
+    st.error(str(error))
+    st.stop()
+
+retriever = vectorstore.as_retriever(search_kwargs={"k": 3})
+if not has_persisted_index:
     st.info("Using an in-memory index built from example.txt. Build faiss_index for a persisted index.")
 
 
@@ -81,7 +89,11 @@ Helpful Answer:"""
 conversational_prompt = PromptTemplate.from_template(conversational_template)
 
 conversational_chain = (
-    {"context": retriever, "question": RunnablePassthrough(), "history": lambda x: "\n".join(st.session_state.history)}
+    {
+        "context": itemgetter("question") | retriever,
+        "question": itemgetter("question"),
+        "history": itemgetter("history"),
+    }
     | conversational_prompt
     | llm
     | StrOutputParser()
@@ -104,7 +116,12 @@ question = st.text_input("Enter your question:")
 if st.button("Ask"):
     if question:
         # Get response
-        result = conversational_chain.invoke(question)
+        result = conversational_chain.invoke(
+            {
+                "question": question,
+                "history": "\n".join(st.session_state.history),
+            }
+        )
         
         # Update history
         st.session_state.history.append(f"Human: {question}")
